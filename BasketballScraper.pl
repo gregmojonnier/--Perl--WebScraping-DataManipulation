@@ -13,13 +13,15 @@ my @abreviationsTableHeaderID = qw(Team OEFF PPG);
 # Table column headers for all player stats for a team
 my @playerStatsTableHeaderID = qw(Name G Min Pts PPG FGM FGA FGP FTM FTA FTP 3PM 3PA 3PP REB RPG AST APG STL BLK TO);
 
-# Open file we are going to write everything to
-my $file;
-open($file, ">playerStatsByTeam-1995_2005.csv");
+# Open file we are going to write player stats to
+open(my $playerStatsFile, ">playerStatsByTeam-1995_2005.csv");
 
-# At top print what all different columns represent, we are adding year and team
-print $file "Year,Team,";
-print $file join( ",", @playerStatsTableHeaderID )."\n";
+# Open file we will write team season/playoff records to
+open(my $teamRecordsFile, ">teamRecords-1995_2005.csv");
+
+# At top print what all different columns represent for each file, we are adding year and team
+print $playerStatsFile "Year,Team," . join( ",", @playerStatsTableHeaderID )."\n";
+print $teamRecordsFile "Year,Team,Swins,Slosses,Pwins,Plosses\n";
 
 for my $yearToGet( 1995..2004 ){
 
@@ -40,23 +42,40 @@ for my $yearToGet( 1995..2004 ){
 	for( @allTeamAbreviations ){
 		my $teamToGet = $_;
 		my $teamPlayerStatsURL = "http://www.databasebasketball.com/teams/teamyear.htm?tm=$teamToGet&lg=n&yr=$yearToGet";
-
 		$htmlContent = getUrlContent( $teamPlayerStatsURL );
-		my $playerStatsTableObj = getTableObject(\@playerStatsTableHeaderID, $htmlContent);
 
+		my $seasonWins = 0;
+		my $seasonLosses = 0;
+		my $playoffWins = 0;
+		my $playoffLosses = 0;
+
+		# Seach HTML content using regex for season wins/losses and playoff wins/losses
+		# The records are consistently in the same area of text on each page
+		if( $htmlContent =~ m/(\d+)\s*-\s*(\d+).*pythagorean.*/ ){
+			( $seasonWins, $seasonLosses ) = ($1, $2);
+		}
+
+		if( $htmlContent =~ m/\(\s*playoffs:(\d+)\s*-\s*(\d+)\s*\)/ ){
+			( $playoffWins, $playoffLosses ) = ($1, $2);
+		}
+		print $teamRecordsFile "$yearToGet,$teamToGet,$seasonWins,$seasonLosses,$playoffWins,$playoffLosses\n";
+
+		# Create table object from the html which makes grabbing tables worth of data easy
+		my $playerStatsTableObj = getTableObject(\@playerStatsTableHeaderID, $htmlContent);
 
 		# Add our year,team before player stats row and print to file
 		# Need to unaccent string, spaces in the player names sometimes have accents
 		for ( $playerStatsTableObj->rows() ){
 			my $entireRow = join( ",", @$_ );
 			my $unaccentedRow = unac_string( $entireRow );
-			print $file "$yearToGet,$teamToGet,$unaccentedRow\n";
+			print $playerStatsFile "$yearToGet,$teamToGet,$unaccentedRow\n";
 		}
 	}
 }
-close $file;
+close $playerStatsFile;
+close $teamRecordsFile;
 
-# Given an URL get the html and return it
+# Given a URL get the html and return it
 sub getUrlContent{
 	my $url = shift;
 
