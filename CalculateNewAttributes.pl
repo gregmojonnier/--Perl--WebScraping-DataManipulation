@@ -20,6 +20,9 @@ for my $index( 0..$#columnHeaders ){
 
 my $totalSeasonMinutes = 48 * 82;
 
+# The 1998 season had a lockout, only 50 games were played during that season
+my $shortenedTotalSeasonMinutes = 48 * 50;
+
 # For each line, calculate the new attributes,
 # append them to the original line, then overwrite the old line in @allFileLines
 for my $lineNum( 1..$#allFileLines ){
@@ -50,7 +53,9 @@ for my $lineNum( 1..$#allFileLines ){
 		my $steals = $curLineAttributes[ $attributesIndex{ "STL" } ];
 		my $blocks = $curLineAttributes[ $attributesIndex{ "BLK" } ];
 
-		my $MPPS = Math::Round::nearest( .0001, $totalMinutes / $totalSeasonMinutes );
+		my $year = $curLineAttributes[ $attributesIndex{ "Year" } ];
+
+		my $MPPS = Math::Round::nearest( .0001, $totalMinutes / ( $year == 1998 ? $shortenedTotalSeasonMinutes : $totalSeasonMinutes ) );
 		my $OEPM = Math::Round::nearest( .0001, ( ( $pts + ( 2.25 * $assists ) + $ftm - $turnovers ) / $totalMinutes ) * $MPPS );
 		my $DEPM = Math::Round::nearest( .0001, ( ( $rebounds + ( 1.5 * $steals ) + ( 1.25 * $blocks ) ) / $totalMinutes ) * $MPPS );
 
