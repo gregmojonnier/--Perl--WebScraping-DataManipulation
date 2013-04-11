@@ -1,6 +1,8 @@
 # Greg Mojonnier
 # This program scrapes all of each NBA team's player's statistics for the 1995-96 to 2004-05 season from databasebasketball
-# and writes it all to a csv file
+# and writes it to playerStatsByTeam-1995_2005.csv 
+# For the same time frame(95-05) it also scrapes each team's regular season and playoff records
+# and writes it to teamRecords-1995_2005.csv
 use warnings;
 use strict;
 use WWW::Mechanize;
